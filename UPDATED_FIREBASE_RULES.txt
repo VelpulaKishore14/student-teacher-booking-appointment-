@@ -1,0 +1,48 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Appointments - Fixed and improved
+    match /appointments/{appointmentId} {
+      allow create: if request.auth != null &&
+                    request.resource.data.studentId == request.auth.uid;
+      
+      allow get, list: if request.auth != null &&
+                       (resource.data.studentId == request.auth.uid ||
+                        resource.data.teacherId == request.auth.uid);
+      
+      allow update: if request.auth != null &&
+                    resource.data.teacherId == request.auth.uid &&
+                    request.resource.data.status in ['approved', 'rejected', 'pending'];
+      
+      allow delete: if false;
+    }
+
+    // Users - Allow reading for teacher search
+    match /users/{userId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Teacher Schedules
+    match /teacherSchedules/{scheduleId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+
+    // Messages
+    match /messages/{messageId} {
+      allow read, write: if request.auth != null;
+    }
+
+    // Logs
+    match /logs/{logId} {
+      allow read, write: if request.auth != null;
+    }
+
+    // Fallback - deny everything else
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+} 
